@@ -1,0 +1,9 @@
+{
+  "token": "YOUR_BOT_TOKEN_HERE",
+  "clientID": "YOUR_CLIENT_ID_HERE",
+  "guildID": "YOUR_GUILD_ID_HERE",
+  "ownerID": "YOUR_OWNER_ID_HERE",
+  "geminiApiKey": "YOUR_GEMINI_KEY_HERE",
+  "openaitoken": "YOUR_OPENAI_KEY_HERE",
+  "geniusAccessToken": "YOUR_GENIUS_TOKEN_HERE"
+}
