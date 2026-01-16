@@ -8,7 +8,7 @@ module.exports = {
     async execute(interaction) {
         const e = new EmbedBuilder()
             .setTitle(`Welcome ${interaction.user.username}`)
-            .setDescription(`General information regarding the discord server, discord bot, and minecraft server can be found here. for more detailed information use the ?help command or ask Moribund with the /ask command`)
+            .setDescription(`General information regarding the discord server, discord bot, and minecraft server can be found here. for more detailed information use the /help command or ask Moribund with the /ask command`)
             .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
             .setTimestamp()
             .setColor(`Random`)

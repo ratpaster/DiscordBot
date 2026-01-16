@@ -17,6 +17,7 @@ const client = new Client({
       GatewayIntentBits.MessageContent
     ]
   });
+client.commandFiles = new Map();
 client.commands = getCommands('./commands');
 
 const genius = new Genius.Client(geniusAccessToken);
@@ -63,17 +64,15 @@ client.on(Events.MessageCreate, async (message) => {
 Member.hasMany(Infraction);
 Infraction.belongsTo(Member);
 
-
 function getCommands(dir) {
-
     let commands = new Collection();
     const commandFiles = getFiles(dir);
 
     for(const commandFile of commandFiles) {
-        //const command = require("."+commandFile);
         const commandPath = path.resolve(__dirname, commandFile);
         const command = require(commandPath);
         commands.set(command.data.toJSON().name, command);
+        client.commandFiles.set(command.data.toJSON().name, commandFile);
     }
 
     return commands;
