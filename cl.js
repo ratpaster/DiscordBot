@@ -4,22 +4,28 @@ const { clientID, guildID, token } = require('./config/config.json');
 
 const rest = new REST({ version: '10'}).setToken(token);
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 (async () => {
     try {
-        const commands = await rest.get( Routes.applicationGuildCommands(clientID, guildID) );
+        console.log('Fetching commands...');
+        const commands = await rest.get(Routes.applicationGuildCommands(clientID, guildID));
 
-        // Delete each existing command
-        for (const command of commands) {
+        console.log(`Found ${commands.length} commands to delete.`);
+
+        for (let i = 0; i < commands.length; i++) {
+            const command = commands[i];
             await rest.delete(Routes.applicationGuildCommand(clientID, guildID, command.id));
-            console.log(`Command ${command.name} deleted successfully`);
+            console.log(`✅ Deleted command ${i + 1}/${commands.length}: ${command.name}`);
+            
+            await sleep(500);
         }
-        console.log(commands)
-        for(let i = 0; i < commands.length; i++) {
-            await rest.delete(Routes.applicationGuildCommand(clientID, guildID, commands[i].id));
-            console.log(`Command ${commands[i].name} deleted successfully`);
-        }
+
+        console.log('✅ All commands deleted successfully!');
 
     } catch (error) {
-        console.error('Error fetching existing commands:', error);
+        console.error('Error deleting commands:', error);
     }
 })();

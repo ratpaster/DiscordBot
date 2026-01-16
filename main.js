@@ -53,6 +53,11 @@ client.login(token);
 const Infraction = require('./models/infraction')
 const Member = require('./models/member')
 const Level = require('./models/level');
+const BlackjackGame = require('./models/blackjackGame');
+const BlackjackStats = require('./models/blackjackStats');
+
+BlackjackGame.sync();
+BlackjackStats.sync();
 
 Level.sync();
 
