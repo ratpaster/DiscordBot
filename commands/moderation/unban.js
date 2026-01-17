@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { logModAction } = require('../../utils/modLog');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -59,6 +60,13 @@ module.exports = {
                 )
                 .setTimestamp()
                 .setFooter({ text: guild.name, iconURL: guild.iconURL() });
+
+
+            await logModAction(guild, 'unban', {
+                target: { user: user, id: userId },
+                moderator: interaction.user,
+                reason: reason
+            });
 
             await interaction.editReply({ embeds: [embed] });
 

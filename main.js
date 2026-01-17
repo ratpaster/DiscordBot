@@ -1,4 +1,3 @@
-// necessary imports
 const { token, ownerID, guildID, clientID, geniusAccessToken } = require('./config/config.json');
 const { Client, Events, GatewayIntentBits, ActivityType, Collection, EmbedBuilder } = require('discord.js');
 const Genius = require('genius-lyrics');
@@ -6,9 +5,6 @@ const Genius = require('genius-lyrics');
 const fs = require('node:fs');
 const path = require('node:path');
 
-//process.exit(1);
-
-// new client from djs
 const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -16,7 +12,8 @@ const client = new Client({
       GatewayIntentBits.GuildVoiceStates,
       GatewayIntentBits.MessageContent
     ]
-  });
+});
+
 client.commandFiles = new Map();
 client.commands = getCommands('./commands');
 
@@ -36,40 +33,77 @@ client.on(Events.InteractionCreate, interaction => {
     }
 })
 
-client.once(Events.ClientReady, c => {
+const eventFiles = fs.readdirSync('./events/logs').filter(file => file.endsWith('.js'));
+
+for (const file of eventFiles) {
+    const event = require(`./events/logs/${file}`);
+    if (event.once) {
+        client.once(event.name, (...args) => event.execute(...args));
+    } else {
+        client.on(event.name, (...args) => event.execute(...args));
+    }
+}
+
+client.once(Events.ClientReady, async c => {
     console.log(`${c.user.tag} has logged in`);
-    c.user.setActivity({name: /*'Swimming with the dead'*/'IN DEVELOPMENT', type: ActivityType.Custom})
+    c.user.setActivity({name: 'IN DEVELOPMENT', type: ActivityType.Custom})
 
     setInterval(() => {
         const currentStatus = c.user.presence.status;
         const newStatus = currentStatus === 'dnd' ? 'idle' : 'dnd';
         c.user.setPresence({ status: newStatus });
-        }, 5000);
+    }, 5000);
+
+    await cleanupBlackjackGames();
 });
+
 client.login(token);
 
-
-// Functions and DBs
 const Infraction = require('./models/infraction')
 const Member = require('./models/member')
+const Guild = require('./models/guild');
 const Level = require('./models/level');
 const BlackjackGame = require('./models/blackjackGame');
-const BlackjackStats = require('./models/blackjackStats');
-
-BlackjackGame.sync();
-BlackjackStats.sync();
-
-Level.sync();
-
-client.on(Events.MessageCreate, async (message) => {
-    const messageCreateEvent = require('./events/messageCreate');
-    messageCreateEvent.execute(message);
-});
 
 Member.hasMany(Infraction);
 Infraction.belongsTo(Member);
 
+(async () => {
+    await Guild.sync({ alter: true });
+    await Member.sync({ alter: true });
+    await Infraction.sync({ alter: true });
+    console.log('✅ Database tables synced');
+})();
+
+async function cleanupBlackjackGames() {
+    try {
+        const activeGames = await BlackjackGame.findAll({
+            where: { status: 'active' }
+        });
+
+        for (const game of activeGames) {
+            const userLevel = await Level.findOne({
+                where: { userId: game.userId, guildId: game.guildId }
+            });
+
+            if (userLevel) {
+                userLevel.xp += game.betAmount;
+                await userLevel.save();
+            }
+
+            await game.destroy();
+        }
+
+        if (activeGames.length > 0) {
+            console.log(`🃏 Cleaned up ${activeGames.length} active blackjack game(s) and refunded XP`);
+        }
+    } catch (error) {
+        console.error('Error cleaning up blackjack games:', error);
+    }
+}
+
 function getCommands(dir) {
+
     let commands = new Collection();
     const commandFiles = getFiles(dir);
 

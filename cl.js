@@ -10,22 +10,19 @@ function sleep(ms) {
 
 (async () => {
     try {
-        console.log('Fetching commands...');
-        const commands = await rest.get(Routes.applicationGuildCommands(clientID, guildID));
+        console.log('Clearing ALL commands (guild AND global)...');
+        
+        await rest.put(Routes.applicationGuildCommands(clientID, guildID), { body: [] });
+        console.log('✅ Cleared all guild commands');
+        
+        await sleep(1000);
+        
+        await rest.put(Routes.applicationCommands(clientID), { body: [] });
+        console.log('✅ Cleared all global commands');
 
-        console.log(`Found ${commands.length} commands to delete.`);
-
-        for (let i = 0; i < commands.length; i++) {
-            const command = commands[i];
-            await rest.delete(Routes.applicationGuildCommand(clientID, guildID, command.id));
-            console.log(`✅ Deleted command ${i + 1}/${commands.length}: ${command.name}`);
-            
-            await sleep(500);
-        }
-
-        console.log('✅ All commands deleted successfully!');
+        console.log('✅ All commands cleared!');
 
     } catch (error) {
-        console.error('Error deleting commands:', error);
+        console.error('Error clearing commands:', error);
     }
 })();

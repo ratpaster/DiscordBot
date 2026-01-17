@@ -1,6 +1,7 @@
 node_modules
 node_modules/
 config/config.json
+config/logs.json
 .env
 database.sqlite
 *.log

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const Infraction = require('../../models/infraction');
 const Member = require('../../models/member');
+const { logModAction } = require('../../utils/modLog');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -106,6 +107,14 @@ module.exports = {
                     inline: true
                 });
             }
+
+            await logModAction(guild, 'ban', {
+                target: target,
+                moderator: user,
+                reason: reason,
+                infractionId: infraction.id,
+                totalInfractions: totalInfractions
+            });
 
             await interaction.editReply({ embeds: [embed] });
 

@@ -35,7 +35,7 @@ module.exports = {
                 });
             }
 
-            const userLevel = await Level.findOne({
+            let userLevel = await Level.findOne({
                 where: { userId: user.id, guildId: guild.id }
             });
 
@@ -98,12 +98,16 @@ module.exports = {
                     return i.update({ content: '❌ Game expired.', embeds: [], components: [] });
                 }
 
+                const currentUserLevel = await Level.findOne({
+                    where: { userId: user.id, guildId: guild.id }
+                });
+
                 if (i.customId === 'bj_hit') {
-                    await handleHit(i, currentGame, userLevel);
+                    await handleHit(i, currentGame, currentUserLevel);
                 } else if (i.customId === 'bj_stand') {
-                    await handleStand(i, currentGame, userLevel);
+                    await handleStand(i, currentGame, currentUserLevel);
                 } else if (i.customId === 'bj_double') {
-                    await handleDouble(i, currentGame, userLevel);
+                    await handleDouble(i, currentGame, currentUserLevel);
                 }
             });
 
@@ -146,7 +150,7 @@ function shuffle(deck) {
 }
 
 function drawCard(deck) {
-    return deck.pop();
+    return deck.shift();
 }
 
 function calculateHand(hand) {
@@ -230,9 +234,16 @@ function createButtons(canDoubleDown = true) {
 }
 
 async function handleHit(interaction, game, userLevel) {
+    if (game.deck.length === 0) {
+        game.deck = createDeck();
+    }
+
     const newCard = drawCard(game.deck);
     game.playerHand.push(newCard);
     game.canDoubleDown = false;
+    
+    game.changed('playerHand', true);
+    game.changed('deck', true);
     await game.save();
 
     const playerValue = calculateHand(game.playerHand);
@@ -249,6 +260,9 @@ async function handleHit(interaction, game, userLevel) {
 
 async function handleStand(interaction, game, userLevel) {
     while (calculateHand(game.dealerHand) < 17) {
+        if (game.deck.length === 0) {
+            game.deck = createDeck();
+        }
         const newCard = drawCard(game.deck);
         game.dealerHand.push(newCard);
     }
@@ -282,8 +296,15 @@ async function handleDouble(interaction, game, userLevel) {
     game.betAmount *= 2;
     await userLevel.save();
 
+    if (game.deck.length === 0) {
+        game.deck = createDeck();
+    }
+
     const newCard = drawCard(game.deck);
     game.playerHand.push(newCard);
+    
+    game.changed('playerHand', true);
+    game.changed('deck', true);
     await game.save();
 
     const playerValue = calculateHand(game.playerHand);
@@ -293,6 +314,9 @@ async function handleDouble(interaction, game, userLevel) {
     }
 
     while (calculateHand(game.dealerHand) < 17) {
+        if (game.deck.length === 0) {
+            game.deck = createDeck();
+        }
         const newCard = drawCard(game.deck);
         game.dealerHand.push(newCard);
     }

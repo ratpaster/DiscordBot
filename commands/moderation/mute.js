@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const Infraction = require('../../models/infraction');
 const Member = require('../../models/member');
+const { logModAction } = require('../../utils/modLog');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -135,6 +136,15 @@ module.exports = {
                 .setTimestamp()
                 .setFooter({ text: guild.name, iconURL: guild.iconURL() });
 
+            await logModAction(guild, 'mute', {
+                target: target,
+                moderator: user,
+                reason: reason,
+                duration: durationStr,
+                infractionId: infraction.id,
+                totalInfractions: totalInfractions
+            });
+            
             await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
